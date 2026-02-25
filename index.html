@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VSync Família</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VSync">
+    
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 30px;
+            margin-top: 40px;
+        }
+        #statusText {
+            color: #FFB300; /* Amarelo a iniciar */
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .btn-estado {
+            width: 100%;
+            max-width: 350px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 40px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        .btn-estado:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>VSync: Irmão</h2>
+        <div id="statusText">A ligar à Nuvem...</div>
+    </div>
+
+    <button class="btn-estado" style="background-color: #F57C00;" onclick="enviarEstado('🛋️', 'Relaxar', '#F57C00')">🛋️   Relaxar</button>
+    <button class="btn-estado" style="background-color: #388E3C;" onclick="enviarEstado('📚', 'Estudar', '#388E3C')">📚   Estudar</button>
+    <button class="btn-estado" style="background-color: #1976D2;" onclick="enviarEstado('🍳', 'Cozinhar', '#1976D2')">🍳   Cozinhar</button>
+
+    <script src="app.js"></script>
+</body>
+</html>
