@@ -8,6 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="VSync">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
@@ -55,7 +57,7 @@
 <body>
 
     <div class="header">
-        <h2>VSync: Irmão</h2>
+        <h2>VSync: Hugo</h2>
         <div id="statusText">A ligar à Nuvem...</div>
     </div>
 
@@ -64,5 +66,22 @@
     <button class="btn-estado" style="background-color: #1976D2;" onclick="enviarEstado('🍳', 'Cozinhar', '#1976D2')">🍳   Cozinhar</button>
 
     <script src="app.js"></script>
+
+    <button class="btn-estado" style="background-color: #455A64; margin-top: 30px;" onclick="toggleMapa()">🗺️ Gerir Zonas</button>
+
+    <div id="painelMapa" style="display: none; width: 100%; max-width: 350px; background: #1E1E1E; padding: 15px; border-radius: 20px; box-sizing: border-box; margin-bottom: 20px;">
+        <h3 style="margin-top: 0;">Nova Zona</h3>
+        <p style="font-size: 14px; color: #AAA;">Clica no mapa para definir o centro.</p>
+        
+        <div id="mapa" style="height: 250px; width: 100%; border-radius: 10px; margin-bottom: 15px;"></div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="nomeZona" placeholder="Nome (ex: Ginásio)" style="flex: 2; padding: 10px; border-radius: 10px; border: none;">
+            <input type="number" id="raioZona" value="150" placeholder="Raio (m)" style="flex: 1; padding: 10px; border-radius: 10px; border: none;" onchange="atualizarRaio()">
+        </div>
+        
+        <button onclick="guardarZona()" style="width: 100%; padding: 15px; background: #81C784; color: black; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Guardar Zona</button>
+        <div id="listaZonasSalvas" style="margin-top: 15px; font-size: 14px;"></div>
+    </div>
 </body>
 </html>

@@ -1,5 +1,5 @@
-// 1. Configurações da Nave Mãe (Reaproveitadas do teu Android)
-const NOME_UTILIZADOR = "HUGO"; // <-- MUDA PARA O NOME DELE AQUI!
+// 1. Configurações da Nave Mãe
+const NOME_UTILIZADOR = "HUGO"; // O nome do teu irmão
 const MQTT_SERVER = "wss://ccda2dcf90d844ba96a090dd38cc8f58.s1.eu.hivemq.cloud:8884/mqtt";
 const MQTT_USER = "hivemq.webclient.1771795370721";
 
@@ -18,8 +18,24 @@ if (!MQTT_PASS) {
 
 // Gera um ID único para a sessão Web dele
 const clientId = 'VSyncWeb-' + Math.random().toString(16).substr(2, 8);
-
 const statusText = document.getElementById('statusText');
+
+// --- GESTÃO DE ZONAS E MAPAS ---
+let ZONAS_CONHECIDAS = JSON.parse(localStorage.getItem('vsync_zonas')) || [];
+let mapaLeaflet = null;
+let marcadorAtual = null;
+let circuloAtual = null;
+
+// --- FÓRMULA MATEMÁTICA (HAVERSINE) ---
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371e3;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
 
 // 2. Ligar ao HiveMQ via WebSockets
 const options = {
@@ -35,8 +51,6 @@ const client = mqtt.connect(MQTT_SERVER, options);
 client.on('connect', function () {
     statusText.innerText = "Conectado ao Serviço!";
     statusText.style.color = "#81C784"; // Verde
-    
-    // Subscrever ao ACK para saber se a mãe recebeu
     client.subscribe('familia/ack');
 });
 
@@ -70,18 +84,30 @@ async function enviarEstado(emoji, nomeEstado, corHex) {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
             
-            // Traduz coordenadas para nome da cidade (Reverse Geocoding gratuito)
-            let locName = "Desconhecido";
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                const data = await response.json();
-                locName = data.address.city || data.address.town || data.address.village || "Localização obtida";
-            } catch (error) {
-                console.log("Erro a traduzir GPS", error);
-                locName = "Sinal GPS Fraco";
+            let locName = null;
+
+            // 1. VERIFICA AS ZONAS CONHECIDAS PRIMEIRO (O teu Radar Local)
+            for (const zona of ZONAS_CONHECIDAS) {
+                const distancia = calcularDistancia(lat, lon, zona.lat, zona.lon);
+                if (distancia <= zona.raio) {
+                    locName = zona.nome; // Está dentro da zona!
+                    break; // Pára de procurar
+                }
+            }
+            
+            // 2. SE NÃO ESTIVER EM NENHUMA ZONA, PROCURA A CIDADE
+            if (!locName) {
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                    const data = await response.json();
+                    locName = data.address.city || data.address.town || data.address.village || "Localização obtida";
+                } catch (error) {
+                    console.log("Erro a traduzir GPS", error);
+                    locName = "Sinal GPS Fraco";
+                }
             }
 
-            // Constrói a mensagem tal como no Android: "Estudar|#388E3C|Lisboa"
+            // Constrói a mensagem
             const payload = `${nomeEstado}|${corHex}|${locName}`;
             
             // Publica no tópico exato do irmão
@@ -90,11 +116,108 @@ async function enviarEstado(emoji, nomeEstado, corHex) {
             statusText.innerText = "Mensagem Enviada! À espera da Mãe...";
         },
         (error) => {
-            // Se ele recusar o GPS ou falhar
             const payload = `${nomeEstado}|${corHex}|Sem Permissão GPS`;
             client.publish(`familia/status/${NOME_UTILIZADOR}`, payload, { qos: 0 });
             statusText.innerText = "Enviado (Sem GPS)";
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
+} // <--- ESTA ERA A CHAVETA QUE FALTAVA!
+
+// --- LÓGICA DO MAPA VISUAL ---
+function toggleMapa() {
+    const painel = document.getElementById('painelMapa');
+    if (painel.style.display === 'none') {
+        painel.style.display = 'block';
+        atualizarListaVisual();
+        
+        // Se o mapa ainda não existir, cria-o!
+        if (!mapaLeaflet) {
+            // Inicia em Lisboa por defeito
+            mapaLeaflet = L.map('mapa').setView([38.7223, -9.1393], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(mapaLeaflet);
+
+            // Quando ele clica no mapa
+            mapaLeaflet.on('click', function(e) {
+                if (marcadorAtual) mapaLeaflet.removeLayer(marcadorAtual);
+                if (circuloAtual) mapaLeaflet.removeLayer(circuloAtual);
+                
+                marcadorAtual = L.marker(e.latlng).addTo(mapaLeaflet);
+                const raio = parseInt(document.getElementById('raioZona').value) || 150;
+                
+                // Desenha o círculo vermelho translúcido estilo VSync
+                circuloAtual = L.circle(e.latlng, {
+                    color: '#E53935',
+                    fillColor: '#E53935',
+                    fillOpacity: 0.2,
+                    radius: raio
+                }).addTo(mapaLeaflet);
+            });
+            
+            // Tenta centrar no GPS atual dele para facilitar
+            navigator.geolocation.getCurrentPosition(pos => {
+                mapaLeaflet.setView([pos.coords.latitude, pos.coords.longitude], 15);
+            });
+        }
+        
+        // Corrige um bug visual comum do Leaflet em painéis escondidos
+        setTimeout(() => mapaLeaflet.invalidateSize(), 100);
+    } else {
+        painel.style.display = 'none';
+    }
+}
+
+function atualizarRaio() {
+    if (circuloAtual) {
+        const raio = parseInt(document.getElementById('raioZona').value) || 150;
+        circuloAtual.setRadius(raio);
+    }
+}
+
+function guardarZona() {
+    const nome = document.getElementById('nomeZona').value.trim();
+    const raio = parseInt(document.getElementById('raioZona').value);
+    
+    if (!marcadorAtual || nome === "") {
+        alert("Por favor, clica no mapa e dá um nome à zona!");
+        return;
+    }
+
+    const novaZona = {
+        nome: nome,
+        lat: marcadorAtual.getLatLng().lat,
+        lon: marcadorAtual.getLatLng().lng,
+        raio: raio
+    };
+
+    ZONAS_CONHECIDAS.push(novaZona);
+    localStorage.setItem('vsync_zonas', JSON.stringify(ZONAS_CONHECIDAS)); // Guarda no cofre!
+    
+    document.getElementById('nomeZona').value = "";
+    alert(`Zona '${nome}' guardada com sucesso!`);
+    atualizarListaVisual();
+}
+
+function atualizarListaVisual() {
+    const div = document.getElementById('listaZonasSalvas');
+    if (ZONAS_CONHECIDAS.length === 0) {
+        div.innerHTML = "<i>Nenhuma zona guardada.</i>";
+        return;
+    }
+    
+    let html = "<b>As tuas Zonas:</b><br>";
+    ZONAS_CONHECIDAS.forEach((z, index) => {
+        html += `📍 ${z.nome} (${z.raio}m) <button onclick="apagarZona(${index})" style="background:transparent; border:none; color:red; float:right;">X</button><br>`;
+    });
+    div.innerHTML = html;
+}
+
+function apagarZona(index) {
+    if(confirm("Queres apagar esta zona?")) {
+        ZONAS_CONHECIDAS.splice(index, 1);
+        localStorage.setItem('vsync_zonas', JSON.stringify(ZONAS_CONHECIDAS));
+        atualizarListaVisual();
+    }
 }
