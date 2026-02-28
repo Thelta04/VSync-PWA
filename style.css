@@ -1,0 +1,165 @@
+/* ==========================================
+   VARIÁVEIS GLOBAIS E RESET
+   ========================================== */
+* {
+    box-sizing: border-box; 
+}
+
+input {
+    min-width: 0; 
+    font-family: inherit; 
+    box-sizing: border-box; 
+}
+
+body {
+    background-color: #121212;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ==========================================
+   CABEÇALHO E TEXTOS
+   ========================================== */
+.header {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 30px;
+    margin-top: 40px;
+}
+
+#statusText {
+    color: #FFB300;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+/* ==========================================
+   BOTÕES PRINCIPAIS
+   ========================================== */
+.btn-estado {
+    width: 100%;
+    max-width: 350px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 40px;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: transform 0.1s;
+}
+
+.btn-estado:active {
+    transform: scale(0.95);
+}
+
+.btn-novo-estado {
+    background-color: #333333;
+    margin-top: 10px;
+    border: 2px dashed #666;
+}
+
+.btn-gerir-zonas {
+    background-color: #455A64;
+    margin-top: 30px;
+}
+
+.btn-guardar {
+    width: 100%;
+    padding: 15px;
+    background: #81C784;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* ==========================================
+   PAINÉIS E FORMULÁRIOS
+   ========================================== */
+.container-botoes {
+    width: 100%;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.painel {
+    display: none; /* Escondidos por defeito */
+    width: 100%;
+    max-width: 350px;
+    background: #1E1E1E;
+    padding: 15px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
+
+.painel h3 {
+    margin-top: 0;
+}
+
+.painel p, .input-color-label {
+    font-size: 14px;
+    color: #AAA;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    width: 100%;
+    align-items: center;
+}
+
+.input-text {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+}
+
+.input-emoji {
+    flex: 1;
+    text-align: center;
+    font-size: 18px;
+}
+
+.input-nome {
+    flex: 3;
+}
+
+.input-color-label {
+    flex: 1;
+}
+
+.input-color {
+    flex: 1;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+/* ==========================================
+   MAPA E ZONAS
+   ========================================== */
+#mapa {
+    height: 250px;
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+#listaZonasSalvas {
+    margin-top: 15px;
+    font-size: 14px;
+    word-break: break-all;
+}

@@ -4,55 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VSync Família</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="VSync">
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
-    <style>
-        body {
-            background-color: #121212;
-            color: white;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .header {
-            width: 100%;
-            text-align: center;
-            margin-bottom: 30px;
-            margin-top: 40px;
-        }
-        #statusText {
-            color: #FFB300; /* Amarelo a iniciar */
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        .btn-estado {
-            width: 100%;
-            max-width: 350px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border: none;
-            border-radius: 40px;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: transform 0.1s;
-        }
-        .btn-estado:active {
-            transform: scale(0.95);
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -61,42 +23,41 @@
         <div id="statusText">A ligar à Nuvem...</div>
     </div>
 
-    <div id="listaBotoes" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-        </div>
+    <div id="listaBotoes" class="container-botoes"></div>
 
-    <button class="btn-estado" style="background-color: #333333; margin-top: 10px; border: 2px dashed #666;" onclick="togglePainelEstado()">➕ Novo Estado</button>
+    <button class="btn-estado btn-novo-estado" onclick="togglePainelEstado()">➕ Novo Estado</button>
 
-    <div id="painelEstado" style="display: none; width: 100%; max-width: 350px; background: #1E1E1E; padding: 15px; border-radius: 20px; box-sizing: border-box; margin-bottom: 20px;">
-        <h3 style="margin-top: 0;">Criar Estado</h3>
+    <div id="painelEstado" class="painel">
+        <h3>Criar Estado</h3>
         
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <input type="text" id="emojiInput" placeholder="Emoji 🏋️" style="flex: 1; padding: 10px; border-radius: 10px; border: none; text-align: center; font-size: 18px;">
-            <input type="text" id="nomeEstadoInput" placeholder="Nome (ex: Ginásio)" style="flex: 3; padding: 10px; border-radius: 10px; border: none;">
+        <div class="input-group">
+            <input type="text" id="emojiInput" class="input-text input-emoji" placeholder="Emoji 🏋️">
+            <input type="text" id="nomeEstadoInput" class="input-text input-nome" placeholder="Nome (ex: Ginásio)">
         </div>
         
-        <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
-            <label style="flex: 1; font-size: 14px; color: #AAA;">Cor do botão:</label>
-            <input type="color" id="corInput" value="#9C27B0" style="flex: 1; height: 40px; border: none; border-radius: 10px; cursor: pointer;">
+        <div class="input-group">
+            <label class="input-color-label">Cor do botão:</label>
+            <input type="color" id="corInput" class="input-color" value="#9C27B0">
         </div>
         
-        <button onclick="guardarNovoEstado()" style="width: 100%; padding: 15px; background: #81C784; color: black; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Guardar</button>
+        <button class="btn-guardar" onclick="guardarNovoEstado()">Guardar</button>
     </div>
 
-    <button class="btn-estado" style="background-color: #455A64; margin-top: 30px;" onclick="toggleMapa()">🗺️ Gerir Zonas</button>
+    <button class="btn-estado btn-gerir-zonas" onclick="toggleMapa()">🗺️ Gerir Zonas</button>
 
-    <div id="painelMapa" style="display: none; width: 100%; max-width: 350px; background: #1E1E1E; padding: 15px; border-radius: 20px; box-sizing: border-box; margin-bottom: 20px;">
-        <h3 style="margin-top: 0;">Nova Zona</h3>
-        <p style="font-size: 14px; color: #AAA;">Clica no mapa para definir o centro.</p>
+    <div id="painelMapa" class="painel">
+        <h3>Nova Zona</h3>
+        <p>Clica no mapa para definir o centro.</p>
         
-        <div id="mapa" style="height: 250px; width: 100%; border-radius: 10px; margin-bottom: 15px;"></div>
+        <div id="mapa"></div>
         
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <input type="text" id="nomeZona" placeholder="Nome (ex: Ginásio)" style="flex: 2; padding: 10px; border-radius: 10px; border: none;">
-            <input type="number" id="raioZona" value="150" placeholder="Raio (m)" style="flex: 1; padding: 10px; border-radius: 10px; border: none;" onchange="atualizarRaio()">
+        <div class="input-group">
+            <input type="text" id="nomeZona" class="input-text input-nome" placeholder="Nome (ex: Ginásio)">
+            <input type="number" id="raioZona" class="input-text input-emoji" value="150" placeholder="Raio (m)" onchange="atualizarRaio()">
         </div>
         
-        <button onclick="guardarZona()" style="width: 100%; padding: 15px; background: #81C784; color: black; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Guardar Zona</button>
-        <div id="listaZonasSalvas" style="margin-top: 15px; font-size: 14px;"></div>
+        <button class="btn-guardar" onclick="guardarZona()">Guardar Zona</button>
+        <div id="listaZonasSalvas"></div>
     </div>
 
     <script src="app.js"></script>
