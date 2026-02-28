@@ -233,53 +233,49 @@ function apagarZona(index) {
 }
 
 // ==========================================
-// --- GESTÃO DE ESTADOS PERSONALIZADOS ---
+// --- GESTÃO DE ESTADOS UNIFICADA ---
 // ==========================================
 
-// 1. Estados base que vêm por defeito
-const ESTADOS_DEFAULT = [
+// 1. Os botões de oferta (só são carregados na 1ª vez que ele abre a app)
+const ESTADOS_INICIAIS = [
     { emoji: '🛋️', nome: 'Relaxar', cor: '#F57C00' },
     { emoji: '📚', nome: 'Estudar', cor: '#388E3C' },
     { emoji: '🍳', nome: 'Cozinhar', cor: '#1976D2' }
 ];
 
-// 2. Carrega os estados customizados do Cofre do iPhone
-let ESTADOS_CUSTOM = JSON.parse(localStorage.getItem('vsync_estados_custom')) || [];
+// 2. Verifica o Cofre. Se estiver vazio (1ª vez), guarda lá os estados iniciais.
+// (Mudei o nome da chave para 'vsync_meus_estados' para forçar uma limpeza no teu teste)
+if (!localStorage.getItem('vsync_meus_estados')) {
+    localStorage.setItem('vsync_meus_estados', JSON.stringify(ESTADOS_INICIAIS));
+}
 
-// 3. Função para desenhar os botões no ecrã
+// 3. Carrega a lista oficial de botões do iPhone dele
+let ESTADOS_ATUAIS = JSON.parse(localStorage.getItem('vsync_meus_estados'));
+
+// 4. Função para desenhar TODOS os botões no ecrã
 function renderizarBotoesEstados() {
     const container = document.getElementById('listaBotoes');
     container.innerHTML = ""; // Limpa os botões antigos
 
-    // Junta os default com os customizados
-    const todosEstados = [...ESTADOS_DEFAULT, ...ESTADOS_CUSTOM];
-
-    todosEstados.forEach((estado, index) => {
-        // Verifica se é um estado customizado (para podermos mostrar o botão de apagar)
-        const isCustom = index >= ESTADOS_DEFAULT.length;
-        const customIndex = index - ESTADOS_DEFAULT.length;
-
-        // Cria o código HTML do botão
-        let btnHtml = `<button class="btn-estado" style="background-color: ${estado.cor}; position: relative;" onclick="enviarEstado('${estado.emoji}', '${estado.nome}', '${estado.cor}')">
-            ${estado.emoji}   ${estado.nome}`;
-            
-        // Se for customizado, adiciona um pequeno X (caixote do lixo) à direita
-        if (isCustom) {
-            btnHtml += `<span onclick="event.stopPropagation(); apagarEstado(${customIndex})" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.7;">🗑️</span>`;
-        }
-
-        btnHtml += `</button>`;
+    ESTADOS_ATUAIS.forEach((estado, index) => {
+        // Agora TODOS os botões têm o caixote do lixo (🗑️)
+        let btnHtml = `
+        <button class="btn-estado" style="background-color: ${estado.cor}; position: relative;" onclick="enviarEstado('${estado.emoji}', '${estado.nome}', '${estado.cor}')">
+            ${estado.emoji}   ${estado.nome}
+            <span onclick="event.stopPropagation(); apagarEstado(${index})" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.7;">🗑️</span>
+        </button>`;
+        
         container.innerHTML += btnHtml;
     });
 }
 
-// 4. Lógica do Menu de Criar Estado
+// 5. Lógica do Menu de Criar Estado
 function togglePainelEstado() {
     const painel = document.getElementById('painelEstado');
     painel.style.display = painel.style.display === 'none' ? 'block' : 'none';
 }
 
-// 5. Função de Guardar Novo Estado
+// 6. Função de Guardar Novo Estado
 function guardarNovoEstado() {
     const emoji = document.getElementById('emojiInput').value.trim() || '📍';
     const nome = document.getElementById('nomeEstadoInput').value.trim();
@@ -291,10 +287,10 @@ function guardarNovoEstado() {
     }
 
     const novoEstado = { emoji: emoji, nome: nome, cor: cor };
-    ESTADOS_CUSTOM.push(novoEstado);
+    ESTADOS_ATUAIS.push(novoEstado); // Adiciona à lista única
     
-    // Guarda no Cofre
-    localStorage.setItem('vsync_estados_custom', JSON.stringify(ESTADOS_CUSTOM));
+    // Atualiza o Cofre
+    localStorage.setItem('vsync_meus_estados', JSON.stringify(ESTADOS_ATUAIS));
 
     // Limpa o formulário e atualiza a interface
     document.getElementById('emojiInput').value = "";
@@ -303,12 +299,12 @@ function guardarNovoEstado() {
     renderizarBotoesEstados(); // Redesenha os botões
 }
 
-// 6. Função para apagar um estado customizado
+// 7. Função para apagar QUALQUER estado
 function apagarEstado(index) {
-    if(confirm("Queres apagar este estado?")) {
-        ESTADOS_CUSTOM.splice(index, 1);
-        localStorage.setItem('vsync_estados_custom', JSON.stringify(ESTADOS_CUSTOM));
-        renderizarBotoesEstados();
+    if(confirm("Queres mesmo apagar este estado?")) {
+        ESTADOS_ATUAIS.splice(index, 1); // Remove da lista
+        localStorage.setItem('vsync_meus_estados', JSON.stringify(ESTADOS_ATUAIS)); // Atualiza o cofre
+        renderizarBotoesEstados(); // Redesenha sem o botão apagado
     }
 }
 
