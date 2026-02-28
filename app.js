@@ -55,10 +55,20 @@ client.on('connect', function () {
 });
 
 client.on('message', function (topic, message) {
+    const payload = message.toString().toUpperCase();
+    
     if (topic === 'familia/ack') {
-        const payload = message.toString();
-        if (payload.toUpperCase() === NOME_UTILIZADOR.toUpperCase()) {
+        if (payload === NOME_UTILIZADOR.toUpperCase()) {
             alert("Atualizado no Ecrã da Mãe! ✅");
+        }
+    } 
+    else if (topic === 'familia/mae/kiss') {
+        if (payload === NOME_UTILIZADOR.toUpperCase()) {
+            alert("A Mãe mandou-te um beijinho! 😘");
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
+            
+            // ✨ ENVIA O RECIBO DE LEITURA (ACK) PARA A MÃE
+            client.publish('familia/kiss/ack', NOME_UTILIZADOR, { qos: 1 });
         }
     }
 });
@@ -221,3 +231,86 @@ function apagarZona(index) {
         atualizarListaVisual();
     }
 }
+
+// ==========================================
+// --- GESTÃO DE ESTADOS PERSONALIZADOS ---
+// ==========================================
+
+// 1. Estados base que vêm por defeito
+const ESTADOS_DEFAULT = [
+    { emoji: '🛋️', nome: 'Relaxar', cor: '#F57C00' },
+    { emoji: '📚', nome: 'Estudar', cor: '#388E3C' },
+    { emoji: '🍳', nome: 'Cozinhar', cor: '#1976D2' }
+];
+
+// 2. Carrega os estados customizados do Cofre do iPhone
+let ESTADOS_CUSTOM = JSON.parse(localStorage.getItem('vsync_estados_custom')) || [];
+
+// 3. Função para desenhar os botões no ecrã
+function renderizarBotoesEstados() {
+    const container = document.getElementById('listaBotoes');
+    container.innerHTML = ""; // Limpa os botões antigos
+
+    // Junta os default com os customizados
+    const todosEstados = [...ESTADOS_DEFAULT, ...ESTADOS_CUSTOM];
+
+    todosEstados.forEach((estado, index) => {
+        // Verifica se é um estado customizado (para podermos mostrar o botão de apagar)
+        const isCustom = index >= ESTADOS_DEFAULT.length;
+        const customIndex = index - ESTADOS_DEFAULT.length;
+
+        // Cria o código HTML do botão
+        let btnHtml = `<button class="btn-estado" style="background-color: ${estado.cor}; position: relative;" onclick="enviarEstado('${estado.emoji}', '${estado.nome}', '${estado.cor}')">
+            ${estado.emoji}   ${estado.nome}`;
+            
+        // Se for customizado, adiciona um pequeno X (caixote do lixo) à direita
+        if (isCustom) {
+            btnHtml += `<span onclick="event.stopPropagation(); apagarEstado(${customIndex})" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.7;">🗑️</span>`;
+        }
+
+        btnHtml += `</button>`;
+        container.innerHTML += btnHtml;
+    });
+}
+
+// 4. Lógica do Menu de Criar Estado
+function togglePainelEstado() {
+    const painel = document.getElementById('painelEstado');
+    painel.style.display = painel.style.display === 'none' ? 'block' : 'none';
+}
+
+// 5. Função de Guardar Novo Estado
+function guardarNovoEstado() {
+    const emoji = document.getElementById('emojiInput').value.trim() || '📍';
+    const nome = document.getElementById('nomeEstadoInput').value.trim();
+    const cor = document.getElementById('corInput').value;
+
+    if (nome === "") {
+        alert("Por favor, dá um nome ao estado!");
+        return;
+    }
+
+    const novoEstado = { emoji: emoji, nome: nome, cor: cor };
+    ESTADOS_CUSTOM.push(novoEstado);
+    
+    // Guarda no Cofre
+    localStorage.setItem('vsync_estados_custom', JSON.stringify(ESTADOS_CUSTOM));
+
+    // Limpa o formulário e atualiza a interface
+    document.getElementById('emojiInput').value = "";
+    document.getElementById('nomeEstadoInput').value = "";
+    togglePainelEstado(); // Esconde o painel
+    renderizarBotoesEstados(); // Redesenha os botões
+}
+
+// 6. Função para apagar um estado customizado
+function apagarEstado(index) {
+    if(confirm("Queres apagar este estado?")) {
+        ESTADOS_CUSTOM.splice(index, 1);
+        localStorage.setItem('vsync_estados_custom', JSON.stringify(ESTADOS_CUSTOM));
+        renderizarBotoesEstados();
+    }
+}
+
+// ✨ ACIONADOR INICIAL: Desenha os botões assim que a app abre!
+renderizarBotoesEstados();

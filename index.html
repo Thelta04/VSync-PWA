@@ -61,11 +61,26 @@
         <div id="statusText">A ligar à Nuvem...</div>
     </div>
 
-    <button class="btn-estado" style="background-color: #F57C00;" onclick="enviarEstado('🛋️', 'Relaxar', '#F57C00')">🛋️   Relaxar</button>
-    <button class="btn-estado" style="background-color: #388E3C;" onclick="enviarEstado('📚', 'Estudar', '#388E3C')">📚   Estudar</button>
-    <button class="btn-estado" style="background-color: #1976D2;" onclick="enviarEstado('🍳', 'Cozinhar', '#1976D2')">🍳   Cozinhar</button>
+    <div id="listaBotoes" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        </div>
 
-    <script src="app.js"></script>
+    <button class="btn-estado" style="background-color: #333333; margin-top: 10px; border: 2px dashed #666;" onclick="togglePainelEstado()">➕ Novo Estado</button>
+
+    <div id="painelEstado" style="display: none; width: 100%; max-width: 350px; background: #1E1E1E; padding: 15px; border-radius: 20px; box-sizing: border-box; margin-bottom: 20px;">
+        <h3 style="margin-top: 0;">Criar Estado</h3>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="emojiInput" placeholder="Emoji 🏋️" style="flex: 1; padding: 10px; border-radius: 10px; border: none; text-align: center; font-size: 18px;">
+            <input type="text" id="nomeEstadoInput" placeholder="Nome (ex: Ginásio)" style="flex: 3; padding: 10px; border-radius: 10px; border: none;">
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+            <label style="flex: 1; font-size: 14px; color: #AAA;">Cor do botão:</label>
+            <input type="color" id="corInput" value="#9C27B0" style="flex: 1; height: 40px; border: none; border-radius: 10px; cursor: pointer;">
+        </div>
+        
+        <button onclick="guardarNovoEstado()" style="width: 100%; padding: 15px; background: #81C784; color: black; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Guardar</button>
+    </div>
 
     <button class="btn-estado" style="background-color: #455A64; margin-top: 30px;" onclick="toggleMapa()">🗺️ Gerir Zonas</button>
 
@@ -83,5 +98,7 @@
         <button onclick="guardarZona()" style="width: 100%; padding: 15px; background: #81C784; color: black; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Guardar Zona</button>
         <div id="listaZonasSalvas" style="margin-top: 15px; font-size: 14px;"></div>
     </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
